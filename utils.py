@@ -2,7 +2,6 @@ import requests
 import cv2
 import numpy as np
 import logging
-from deepface import DeepFace
 from fastapi import HTTPException
 
 logger = logging.getLogger(__name__)
@@ -12,10 +11,13 @@ def download_image_to_array(url: str, max_size=640) -> np.ndarray:
     Download an image from a URL and resize it to a maximum size, returning it as a NumPy array.
     """
     try:
-        response = requests.get(url, timeout=10)
+        # Disable SSL verification for local development (NOT SAFE FOR PRODUCTION)
+        response = requests.get(url, timeout=10, verify=False)
         response.raise_for_status()
         image_array = np.frombuffer(response.content, np.uint8)
         img = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+        if img is None:
+            raise ValueError("Failed to decode image.")
         h, w = img.shape[:2]
         if max(h, w) > max_size:
             if h > w:
